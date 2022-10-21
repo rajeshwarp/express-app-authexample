@@ -4,7 +4,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require('mongoose');
-const encrypt = require('mongoose-encryption')
+//const encrypt = require('mongoose-encryption') we will see hashing
+var md5 = require('md5')
 const app = express();
 app.set('view engine', 'ejs');
 
@@ -14,7 +15,6 @@ app.use(bodyParser.urlencoded({
 app.use(express.static("public"));
 
 app.get('/', function (req, res) {
-
     res.render("home")
 })
 
@@ -30,7 +30,7 @@ app.get('/login', function (req, res) {
 app.post('/register', function (req, res) {
     const newUser = new User({
         email: req.body.username,
-        password: req.body.password
+        password: md5(req.body.password)
     })
 
     newUser.save(function (err) {
@@ -45,7 +45,7 @@ app.post('/register', function (req, res) {
 // User login Level one database authentication 
 app.post('/login', function (req, res) {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password);
 
     User.findOne({ email: username }, function (err, userResult) {
         if (err) {
@@ -62,20 +62,18 @@ app.post('/login', function (req, res) {
     })
 })
 
-
-
 // Database 
 mongoose.connect("mongodb://localhost:27017/userDB", {
     useNewUrlParser: true
 });
 //---------VV-------------
-const userSchema = new mongoose.Schema({
+const userSchema = {
     email: String,
     password: String
-});
+};
 //---------VV----- .env file--------
 
-userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ['password'] });
+//userSchema.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ['password'] });
 
 const User = new mongoose.model("User", userSchema);
 
